@@ -7,7 +7,7 @@ import (
 )
 
 // TODO
-// - Handle parsing for lists, etc..
+// - Handle parsing for quotes and code quotes
 // - Only parse files if they have been changed since last time
 // - Handle all potential errors
 

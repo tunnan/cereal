@@ -13,21 +13,8 @@ type token struct {
   Body string
 }
 
-//
-// Split the body contents at every empty line (\n\n)
-//
-func splitBody(body string) (result []string) {
-  newline := regexp.MustCompile("\r?\n\r?\n")
-  newlineEnd := regexp.MustCompile("\r?\n$")
-  lines := newline.Split(body, -1)
-
-  for _, line := range lines {
-    replaced := newlineEnd.ReplaceAll([]byte(line), []byte(""))
-    result = append(result, string(replaced))
-  }
-
-  return
-}
+var CRLF = regexp.MustCompile("\r?\n")
+var CRLFCRLF = regexp.MustCompile("\r?\n\r?\n")
 
 //
 // Return a token with the proper tag and body
@@ -38,6 +25,8 @@ func determineToken(line string) (t *token) {
     "# ": "h1",
     "!": "img",
     "[": "a",
+    "- ": "ul",
+    "* ": "ol",
   }
 
   for prefix, tag := range m {
@@ -68,20 +57,49 @@ func tokenize(lines []string) (tokens []token) {
 // Parse the body into HTML
 //
 func Parse(body string) (html string){
-  tokens := tokenize(splitBody(body))
+  lines := CRLFCRLF.Split(body, -1)
+  tokens := tokenize(lines) 
 
   for _, token := range tokens {
     switch token.Tag {
+
+    // Images
     case "img":
       replacer := strings.NewReplacer(
         "[", "<img alt=\"",
         "](", "\" src=\"",
         ")", "\">")
       html += replacer.Replace(token.Body)
+
+    // Links
     case "a":
       innerText := token.Body[:strings.Index(token.Body, "]")]
       href := token.Body[strings.Index(token.Body, "(")+1:strings.Index(token.Body, ")")]
       html += "<a href=\""+href+"\">"+innerText+"</a>"
+
+    // Unordered lists
+    case "ul":
+      html += "<ul>"
+      for _, li := range CRLF.Split("- " + token.Body, -1) {
+        v := strings.TrimPrefix(li, "- ")
+        if v != "" {
+          html += "<li>"+v+"</li>"
+        }
+      }
+      html += "</ul>"
+
+    // Ordered lists
+    case "ol":
+      html += "<ol>"
+      for _, li := range CRLF.Split("* " + token.Body, -1) {
+        v := strings.TrimPrefix(li, "* ")
+        if v != "" {
+          html += "<li>"+v+"</li>"
+        }
+      }
+      html += "</ol>"
+
+    // Default to <p>
     default:
       html += "<"+token.Tag+">"+token.Body+"</"+token.Tag+">"
     }

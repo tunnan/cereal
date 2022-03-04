@@ -3,7 +3,7 @@
 ![alt text here](./assets/banner.png)
 
 Lorem ipsum dolor sit amet, consectetur adipiscing 
-elit, sed do eiusmod tempor incididunt ut labore et 
+elit, sed do eiusmod tempor <a href="#">incididunt</a> ut labore et 
 dolore magna aliqua. Ut enim ad minim veniam, quis 
 nostrud exercitation ullamco laboris nisi ut aliquip 
 ex ea commodo consequat. Duis aute irure dolor in 
@@ -13,3 +13,9 @@ cupidatat non proident, sunt in culpa qui officia
 deserunt mollit anim id est laborum.
 
 [A link somewhere](https://www.example.com)
+
+- Foo
+- Bar
+
+* Hello
+* World
