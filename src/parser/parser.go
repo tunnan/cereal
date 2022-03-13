@@ -1,109 +1,96 @@
 package parser
 
 import (
+	"fmt"
 	"regexp"
-	"strings"
 )
 
 //
-// Token struct
+// Return the opening, or closing, tag depending on the first arguments truthness
 //
-type token struct {
-  Tag string
-  Body string
-}
-
-var CRLF = regexp.MustCompile("\r?\n")
-var CRLFCRLF = regexp.MustCompile("\r?\n\r?\n")
-
-//
-// Return a token with the proper tag and body
-// based on the matching prefix
-//
-func determineToken(line string) (t *token) {
-  m := map[string]string{
-    "# ": "h1",
-    "!": "img",
-    "[": "a",
-    "- ": "ul",
-    "* ": "ol",
-  }
-
-  for prefix, tag := range m {
-    if strings.HasPrefix(line, prefix) {
-      t = &token{tag, line[len(prefix):]}
-    }
-  }
-
-  if t == nil {
-    t = &token{"p", line}
-  }
-
-  return
+func getTag(inside bool, openingTag string, closingTag string) string {
+	if inside {
+		return closingTag
+	}
+	return openingTag
 }
 
 //
-// Tokenize every line into an array of tokens
+// Parse a line by checking the first character of the string
 //
-func tokenize(lines []string) (tokens []token) {
-  for _, line := range lines {
-    tokens = append(tokens, *determineToken(line))
-  }
+func Parse(str string) string {
+	buffer := ""
 
-  return
+	// Headers
+	if str[0] == '#' {
+		n := 1
+
+		for i := 1; i < 6; i++ {
+			if str[i] == '#' {
+				n++
+			}
+		}
+
+		buffer += fmt.Sprintf("<h%d>%s</h%[1]d>", n, ParseBody(str[n+1:]))
+		return buffer
+	}
+
+	// Lists
+	if str[0] == '-' {
+		list := regexp.MustCompile(`\n`).Split(str, -1)
+
+		buffer += "<ul>"
+		for _, l := range list {
+			if l != "" {
+				buffer += "<li>" + l[2:] + "</li>"
+			}
+		}
+		buffer += "</ul>"
+		return buffer
+	}
+
+	// Paragraphs
+	return "<p>" + ParseBody(str) + "</p>"
 }
 
 //
-// Parse the body into HTML
+// Parse the line body
 //
-func Parse(body string) (html string){
-  lines := CRLFCRLF.Split(body, -1)
-  tokens := tokenize(lines) 
+func ParseBody(str string) string {
+	buffer := ""
+	insideBold := false
+	insideItalic := false
+	insideBoldItalic := false
 
-  for _, token := range tokens {
-    switch token.Tag {
+	for i := 0; i < len(str); i++ {
+		c := str[i]
 
-    // Images
-    case "img":
-      replacer := strings.NewReplacer(
-        "[", "<img alt=\"",
-        "](", "\" src=\"",
-        ")", "\">")
-      html += replacer.Replace(token.Body)
+		// Styling
+		if c == '*' {
+			if i+1 < len(str) && str[i+1] == '*' {
+				// Bold + italic
+				if i+2 < len(str) && str[i+2] == '*' {
+					buffer += getTag(insideBoldItalic, "<b><i>", "</i></b>")
+					insideBoldItalic = !insideBoldItalic
+					i += 2
+					continue
+				}
 
-    // Links
-    case "a":
-      innerText := token.Body[:strings.Index(token.Body, "]")]
-      href := token.Body[strings.Index(token.Body, "(")+1:strings.Index(token.Body, ")")]
-      html += "<a href=\""+href+"\">"+innerText+"</a>"
+				// Bold
+				buffer += getTag(insideBold, "<b>", "</b>")
+				insideBold = !insideBold
+				i++
+				continue
+			}
 
-    // Unordered lists
-    case "ul":
-      html += "<ul>"
-      for _, li := range CRLF.Split("- " + token.Body, -1) {
-        v := strings.TrimPrefix(li, "- ")
-        if v != "" {
-          html += "<li>"+v+"</li>"
-        }
-      }
-      html += "</ul>"
+			// Italic
+			buffer += getTag(insideItalic, "<i>", "</i>")
+			insideItalic = !insideItalic
+			continue
+		}
 
-    // Ordered lists
-    case "ol":
-      html += "<ol>"
-      for _, li := range CRLF.Split("* " + token.Body, -1) {
-        v := strings.TrimPrefix(li, "* ")
-        if v != "" {
-          html += "<li>"+v+"</li>"
-        }
-      }
-      html += "</ol>"
+		buffer += string(c)
+	}
 
-    // Default to <p>
-    default:
-      html += "<"+token.Tag+">"+token.Body+"</"+token.Tag+">"
-    }
-  }
-
-  return
+	return buffer
 }
