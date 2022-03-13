@@ -3,6 +3,7 @@ package parser
 import (
 	"fmt"
 	"regexp"
+	"strings"
 )
 
 //
@@ -35,7 +36,7 @@ func Parse(str string) string {
 		return buffer
 	}
 
-	// Lists
+	// Unordered lists
 	if str[0] == '-' {
 		list := regexp.MustCompile(`\n`).Split(str, -1)
 
@@ -47,6 +48,36 @@ func Parse(str string) string {
 		}
 		buffer += "</ul>"
 		return buffer
+	}
+
+	// Ordered lists
+	if str[0] == '*' {
+		list := regexp.MustCompile(`\n`).Split(str, -1)
+
+		buffer += "<ol>"
+		for _, l := range list {
+			if l != "" {
+				buffer += "<li>" + l[2:] + "</li>"
+			}
+		}
+		buffer += "</ol>"
+		return buffer
+	}
+
+	// Images
+	if str[0] == '!' {
+		i := strings.Index(str, "]")
+		return fmt.Sprintf("<img alt=\"%s\" src=\"%s\">",
+			str[2:i],
+			str[i+2:strings.Index(str, ")")])
+	}
+
+	// Links
+	if str[0] == '[' {
+		i := strings.Index(str, "]")
+		return fmt.Sprintf("<a href=\"%s\">%s</a>",
+			str[i+2:strings.Index(str, ")")],
+			str[1:i])
 	}
 
 	// Paragraphs

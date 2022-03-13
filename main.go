@@ -10,7 +10,7 @@ import (
 )
 
 // TODO
-// - Handle parsing for quotes and code quotes
+// - Handle parsing for ordered lists, links, images, quotes and code quotes
 // - Add some way to render navigation or something
 // - Only parse files if they have been changed since last time
 // - Handle all potential errors
