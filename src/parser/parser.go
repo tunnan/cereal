@@ -52,16 +52,35 @@ func Parse(str string) string {
 
 	// Ordered lists
 	if str[0] == '*' {
-		list := regexp.MustCompile(`\n`).Split(str, -1)
+		lines := regexp.MustCompile(`\n`).Split(str, -1)
 
 		buffer += "<ol>"
-		for _, l := range list {
-			if l != "" {
-				buffer += "<li>" + l[2:] + "</li>"
+		for _, line := range lines {
+			if line != "" {
+				buffer += "<li>" + line[2:] + "</li>"
 			}
 		}
 		buffer += "</ol>"
 		return buffer
+	}
+
+	// Text quotes
+	if str[0] == '>' {
+		lines := regexp.MustCompile(`\n`).Split(str, -1)
+
+		buffer += "<blockquote>"
+		for _, line := range lines {
+			if line != "" {
+				buffer += line[2:]
+			}
+		}
+		buffer += "</blockquote>"
+		return buffer
+	}
+
+	// Code quotes
+	if strings.HasPrefix(str, "```") {
+		return "<pre>" + str[3:len(str)-3] + "</pre>"
 	}
 
 	// Images
