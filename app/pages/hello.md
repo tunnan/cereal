@@ -12,20 +12,4 @@ eu fugiat nulla pariatur. Excepteur sint occaecat
 cupidatat non proident, sunt in culpa qui officia 
 deserunt mollit anim id est laborum.
 
-> This is a quote 
-> that spans over 
-> several lines
-
-```
-git status
-git add
-git commit
-```
-
 [A link somewhere](https://www.example.com)
-
-- Foo
-- Bar
-
-* Hello
-* World
